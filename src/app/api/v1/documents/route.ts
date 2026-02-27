@@ -3,14 +3,14 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { requireAuth } from "@/lib/auth-utils";
 
 const createDocumentSchema = z.object({
-  title: string,
-  type: string,
-  url: string,
-  size: number.optional(),
+  title: z.string(),
+  type: z.string(),
+  url: z.string(),
+  size: z.number().optional(),
 });
 
 // GET /api/document — list records for the authenticated org
@@ -26,18 +26,18 @@ export async function GET(request: NextRequest) {
   const skip = (page - 1) * limit;
 
   try {
-    const [items, total] = await prisma.$transaction([
-      prisma.document.findMany({
+    const [items, total] = await db.$transaction([
+      db.document.findMany({
         where: {
-          organizationId: session.user.organizationId,
+          organizationId: session.organizationId ?? undefined,
         },
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
       }),
-      prisma.document.count({
+      db.document.count({
         where: {
-          organizationId: session.user.organizationId,
+          organizationId: session.organizationId ?? undefined,
         },
       }),
     ]);
@@ -81,11 +81,15 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  if (!session.organizationId) {
+    return NextResponse.json({ error: "No organization context" }, { status: 400 });
+  }
+
   try {
-    const record = await prisma.document.create({
+    const record = await db.document.create({
       data: {
         ...parsed.data,
-        organizationId: session.user.organizationId,
+        organizationId: session.organizationId,
       },
     });
 

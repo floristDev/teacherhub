@@ -153,7 +153,7 @@ export interface Report {
   organizationId: string;
   title: string;
   type: string;
-  data: Record&lt;string, unknown&gt;;
+  data: Record<string, unknown>;
   generatedAt: Date;
   createdAt: Date;
   updatedAt: Date;

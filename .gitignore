@@ -65,3 +65,4 @@ coverage/
 .cache/
 tmp/
 temp/
+.omc/

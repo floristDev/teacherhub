@@ -112,8 +112,8 @@ export function randomId(length = 12): string {
   let result = '';
   const randomValues = new Uint8Array(length);
   crypto.getRandomValues(randomValues);
-  for (const val of randomValues) {
-    result += chars[val % chars.length];
+  for (let i = 0; i < randomValues.length; i++) {
+    result += chars[randomValues[i] % chars.length];
   }
   return result;
 }

@@ -6,14 +6,15 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 import { requireAuth } from "@/lib/auth-utils";
 
 const reportSchema = z.object({
-  title: string,
-  type: string,
-  data: Record&lt;string, unknown&gt;,
-  generatedAt: Date,
+  title: z.string(),
+  type: z.string(),
+  data: z.record(z.string(), z.unknown()),
+  generatedAt: z.date(),
 });
 
 type ReportInput = z.infer<typeof reportSchema>;
@@ -46,11 +47,16 @@ export async function createReport(
     };
   }
 
+  if (!session.organizationId) {
+    return { success: false, error: "No organization context." };
+  }
+
   try {
-    const record = await prisma.report.create({
+    const record = await db.report.create({
       data: {
         ...parsed.data,
-        organizationId: session.user.organizationId,
+        data: parsed.data.data as Prisma.InputJsonValue,
+        organizationId: session.organizationId,
       },
     });
 
@@ -88,7 +94,7 @@ export async function updateReport(
   }
 
   try {
-    const existing = await prisma.report.findUnique({
+    const existing = await db.report.findUnique({
       where: { id },
     });
 
@@ -96,13 +102,17 @@ export async function updateReport(
       return { success: false, error: "Report not found." };
     }
 
-    if (existing.organizationId !== session.user.organizationId) {
+    if (existing.organizationId !== session.organizationId) {
       return { success: false, error: "You do not have permission to update this record." };
     }
 
-    const record = await prisma.report.update({
+    const { data: jsonData, ...restData } = parsed.data;
+    const record = await db.report.update({
       where: { id },
-      data: parsed.data,
+      data: {
+        ...restData,
+        ...(jsonData !== undefined && { data: jsonData as Prisma.InputJsonValue }),
+      },
     });
 
     revalidatePath("/report");
@@ -122,7 +132,7 @@ export async function deleteReport(id: string): Promise<never | ActionResult> {
   }
 
   try {
-    const existing = await prisma.report.findUnique({
+    const existing = await db.report.findUnique({
       where: { id },
     });
 
@@ -130,11 +140,11 @@ export async function deleteReport(id: string): Promise<never | ActionResult> {
       return { success: false, error: "Report not found." };
     }
 
-    if (existing.organizationId !== session.user.organizationId) {
+    if (existing.organizationId !== session.organizationId) {
       return { success: false, error: "You do not have permission to delete this record." };
     }
 
-    await prisma.report.delete({
+    await db.report.delete({
       where: { id },
     });
   } catch (error) {

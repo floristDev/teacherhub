@@ -3,14 +3,15 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 import { requireAuth } from "@/lib/auth-utils";
 
 const updateReportSchema = z.object({
-  title: string.optional(),
-  type: string.optional(),
-  data: Record&lt;string, unknown&gt;.optional(),
-  generatedAt: Date.optional(),
+  title: z.string().optional(),
+  type: z.string().optional(),
+  data: z.record(z.string(), z.unknown()).optional(),
+  generatedAt: z.date().optional(),
 }).refine((data) => Object.keys(data).length > 0, {
   message: "At least one field must be provided for update",
 });
@@ -27,7 +28,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
   const { id } = await params;
 
   try {
-    const record = await prisma.report.findUnique({
+    const record = await db.report.findUnique({
       where: { id },
     });
 
@@ -35,7 +36,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Report not found" }, { status: 404 });
     }
 
-    if (record.organizationId !== session.user.organizationId) {
+    if (record.organizationId !== session.organizationId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -71,7 +72,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
 
   try {
-    const existing = await prisma.report.findUnique({
+    const existing = await db.report.findUnique({
       where: { id },
     });
 
@@ -79,13 +80,17 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Report not found" }, { status: 404 });
     }
 
-    if (existing.organizationId !== session.user.organizationId) {
+    if (existing.organizationId !== session.organizationId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const updated = await prisma.report.update({
+    const { data: jsonData, ...restData } = parsed.data;
+    const updated = await db.report.update({
       where: { id },
-      data: parsed.data,
+      data: {
+        ...restData,
+        ...(jsonData !== undefined && { data: jsonData as Prisma.InputJsonValue }),
+      },
     });
 
     return NextResponse.json({ data: updated });
@@ -105,7 +110,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   const { id } = await params;
 
   try {
-    const existing = await prisma.report.findUnique({
+    const existing = await db.report.findUnique({
       where: { id },
     });
 
@@ -113,11 +118,11 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Report not found" }, { status: 404 });
     }
 
-    if (existing.organizationId !== session.user.organizationId) {
+    if (existing.organizationId !== session.organizationId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    await prisma.report.delete({
+    await db.report.delete({
       where: { id },
     });
 

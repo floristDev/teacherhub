@@ -6,14 +6,14 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { requireAuth } from "@/lib/auth-utils";
 
 const documentSchema = z.object({
-  title: string,
-  type: string,
-  url: string,
-  size: number.optional(),
+  title: z.string(),
+  type: z.string(),
+  url: z.string(),
+  size: z.number().optional(),
 });
 
 type DocumentInput = z.infer<typeof documentSchema>;
@@ -46,11 +46,15 @@ export async function createDocument(
     };
   }
 
+  if (!session.organizationId) {
+    return { success: false, error: "No organization context." };
+  }
+
   try {
-    const record = await prisma.document.create({
+    const record = await db.document.create({
       data: {
         ...parsed.data,
-        organizationId: session.user.organizationId,
+        organizationId: session.organizationId,
       },
     });
 
@@ -88,7 +92,7 @@ export async function updateDocument(
   }
 
   try {
-    const existing = await prisma.document.findUnique({
+    const existing = await db.document.findUnique({
       where: { id },
     });
 
@@ -96,11 +100,11 @@ export async function updateDocument(
       return { success: false, error: "Document not found." };
     }
 
-    if (existing.organizationId !== session.user.organizationId) {
+    if (existing.organizationId !== session.organizationId) {
       return { success: false, error: "You do not have permission to update this record." };
     }
 
-    const record = await prisma.document.update({
+    const record = await db.document.update({
       where: { id },
       data: parsed.data,
     });
@@ -122,7 +126,7 @@ export async function deleteDocument(id: string): Promise<never | ActionResult> 
   }
 
   try {
-    const existing = await prisma.document.findUnique({
+    const existing = await db.document.findUnique({
       where: { id },
     });
 
@@ -130,11 +134,11 @@ export async function deleteDocument(id: string): Promise<never | ActionResult> 
       return { success: false, error: "Document not found." };
     }
 
-    if (existing.organizationId !== session.user.organizationId) {
+    if (existing.organizationId !== session.organizationId) {
       return { success: false, error: "You do not have permission to delete this record." };
     }
 
-    await prisma.document.delete({
+    await db.document.delete({
       where: { id },
     });
   } catch (error) {

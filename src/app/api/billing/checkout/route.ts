@@ -2,7 +2,7 @@
 // 2026-02-27T00:07:12.324Z
 
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth-utils";
 import { createCheckoutSession } from "@/lib/stripe";
 import { z } from "zod";
 
@@ -12,16 +12,16 @@ const checkoutSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth();
+    const user = await getCurrentUser();
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
       );
     }
 
-    if (!session.user.organizationId) {
+    if (!user.organizationId) {
       return NextResponse.json(
         { error: "No organization found for this account" },
         { status: 400 }
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     const { priceId } = result.data;
 
     const checkoutSession = await createCheckoutSession(
-      session.user.organizationId,
+      user.organizationId,
       priceId
     );
 

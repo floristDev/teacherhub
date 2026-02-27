@@ -8,13 +8,14 @@ export const metadata: Metadata = {
   title: "Reset Password",
 };
 
-async function resetPasswordAction(formData: FormData) {
+async function resetPasswordAction(formData: FormData): Promise<void> {
   "use server";
 
+  const { redirect } = await import("next/navigation");
   const email = (formData.get("email") as string)?.trim().toLowerCase();
 
   if (!email) {
-    return { error: "Email is required." };
+    redirect("/reset-password?error=email_required");
   }
 
   // Import inline to avoid exposing db to client bundle
@@ -47,8 +48,8 @@ async function resetPasswordAction(formData: FormData) {
     );
   }
 
-  // Always return success to prevent email enumeration
-  return { success: true };
+  // Always redirect to success to prevent email enumeration
+  redirect("/reset-password?success=1");
 }
 
 export default function ResetPasswordPage({

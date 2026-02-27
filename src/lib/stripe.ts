@@ -4,47 +4,53 @@
 import Stripe from "stripe";
 import { db } from "@/lib/db";
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error("STRIPE_SECRET_KEY environment variable is not set");
+let _stripe: Stripe | null = null;
+
+export function getStripe(): Stripe {
+  if (!_stripe) {
+    const key = process.env.STRIPE_SECRET_KEY;
+    if (!key) {
+      throw new Error("STRIPE_SECRET_KEY is not set. Add it to your .env file.");
+    }
+    _stripe = new Stripe(key, {
+      apiVersion: "2025-02-24.acacia",
+      typescript: true,
+    });
+  }
+  return _stripe;
 }
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2024-12-18.acacia",
-  typescript: true,
-});
-
 export type SubscriptionStatus =
-  | "active"
-  | "trialing"
-  | "past_due"
-  | "canceled"
-  | "incomplete"
-  | "incomplete_expired"
-  | "unpaid"
-  | "paused";
+  | "ACTIVE"
+  | "TRIALING"
+  | "PAST_DUE"
+  | "CANCELED"
+  | "INCOMPLETE"
+  | "INCOMPLETE_EXPIRED"
+  | "UNPAID";
 
 export function mapStripeStatus(
   stripeStatus: Stripe.Subscription.Status
 ): SubscriptionStatus {
   switch (stripeStatus) {
     case "active":
-      return "active";
+      return "ACTIVE";
     case "trialing":
-      return "trialing";
+      return "TRIALING";
     case "past_due":
-      return "past_due";
+      return "PAST_DUE";
     case "canceled":
-      return "canceled";
+      return "CANCELED";
     case "incomplete":
-      return "incomplete";
+      return "INCOMPLETE";
     case "incomplete_expired":
-      return "incomplete_expired";
+      return "INCOMPLETE_EXPIRED";
     case "unpaid":
-      return "unpaid";
+      return "UNPAID";
     case "paused":
-      return "paused";
+      return "ACTIVE";
     default:
-      return "incomplete";
+      return "INCOMPLETE";
   }
 }
 
@@ -54,17 +60,17 @@ export async function createCheckoutSession(
 ): Promise<Stripe.Checkout.Session> {
   const organization = await db.organization.findUnique({
     where: { id: organizationId },
-    include: { subscription: true },
+    include: { subscriptions: true },
   });
 
   if (!organization) {
     throw new Error(`Organization not found: ${organizationId}`);
   }
 
-  let customerId = organization.subscription?.stripeCustomerId;
+  let customerId = organization.subscriptions?.[0]?.stripeCustomerId;
 
   if (!customerId) {
-    const customer = await stripe.customers.create({
+    const customer = await getStripe().customers.create({
       metadata: { organizationId },
     });
     customerId = customer.id;
@@ -72,7 +78,7 @@ export async function createCheckoutSession(
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
-  const session = await stripe.checkout.sessions.create({
+  const session = await getStripe().checkout.sessions.create({
     customer: customerId,
     payment_method_types: ["card"],
     line_items: [
@@ -99,14 +105,14 @@ export async function createPortalSession(
 ): Promise<Stripe.BillingPortal.Session> {
   const organization = await db.organization.findUnique({
     where: { id: organizationId },
-    include: { subscription: true },
+    include: { subscriptions: true },
   });
 
   if (!organization) {
     throw new Error(`Organization not found: ${organizationId}`);
   }
 
-  const customerId = organization.subscription?.stripeCustomerId;
+  const customerId = organization.subscriptions?.[0]?.stripeCustomerId;
 
   if (!customerId) {
     throw new Error(
@@ -116,7 +122,7 @@ export async function createPortalSession(
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
-  const session = await stripe.billingPortal.sessions.create({
+  const session = await getStripe().billingPortal.sessions.create({
     customer: customerId,
     return_url: `${appUrl}/dashboard/settings/billing`,
   });
@@ -125,7 +131,7 @@ export async function createPortalSession(
 }
 
 export async function getSubscription(organizationId: string) {
-  const subscription = await db.subscription.findUnique({
+  const subscription = await db.subscription.findFirst({
     where: { organizationId },
   });
 
@@ -135,7 +141,7 @@ export async function getSubscription(organizationId: string) {
 
   if (subscription.stripeSubscriptionId) {
     try {
-      const stripeSubscription = await stripe.subscriptions.retrieve(
+      const stripeSubscription = await getStripe().subscriptions.retrieve(
         subscription.stripeSubscriptionId,
         { expand: ["default_payment_method", "items.data.price.product"] }
       );
@@ -151,7 +157,7 @@ export async function getSubscription(organizationId: string) {
 export async function cancelSubscription(
   organizationId: string
 ): Promise<void> {
-  const subscription = await db.subscription.findUnique({
+  const subscription = await db.subscription.findFirst({
     where: { organizationId },
   });
 
@@ -159,12 +165,12 @@ export async function cancelSubscription(
     throw new Error("No active subscription found");
   }
 
-  await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
+  await getStripe().subscriptions.update(subscription.stripeSubscriptionId, {
     cancel_at_period_end: true,
   });
 
   await db.subscription.update({
-    where: { organizationId },
-    data: { cancelAtPeriodEnd: true },
+    where: { id: subscription.id },
+    data: { status: "CANCELED" },
   });
 }

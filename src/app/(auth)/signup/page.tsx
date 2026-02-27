@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   title: "Create Account",
 };
 
-async function signupAction(formData: FormData) {
+async function signupAction(formData: FormData): Promise<void> {
   "use server";
 
   const name = (formData.get("name") as string)?.trim();
@@ -23,19 +23,19 @@ async function signupAction(formData: FormData) {
 
   // Validation
   if (!name || !email || !password || !confirmPassword) {
-    return { error: "All fields are required." };
+    redirect("/signup?error=fields_required");
   }
   if (password.length < 8) {
-    return { error: "Password must be at least 8 characters." };
+    redirect("/signup?error=password_too_short");
   }
   if (password !== confirmPassword) {
-    return { error: "Passwords do not match." };
+    redirect("/signup?error=passwords_mismatch");
   }
 
   // Check for existing user
   const existing = await db.user.findUnique({ where: { email } });
   if (existing) {
-    return { error: "An account with that email already exists." };
+    redirect("/signup?error=email_exists");
   }
 
   // Hash password

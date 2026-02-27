@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   title: "Sign In",
 };
 
-async function loginAction(formData: FormData) {
+async function loginAction(formData: FormData): Promise<void> {
   "use server";
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
@@ -25,7 +25,7 @@ async function loginAction(formData: FormData) {
   } catch (error: any) {
     // Auth.js throws a redirect on success — rethrow it
     if (error?.digest?.startsWith("NEXT_REDIRECT")) throw error;
-    return { error: "Invalid email or password. Please try again." };
+    redirect(`/login?error=CredentialsSignin`);
   }
 }
 

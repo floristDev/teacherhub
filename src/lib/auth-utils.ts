@@ -17,7 +17,8 @@ function bufferToBase64(buffer: ArrayBuffer): string {
 }
 
 function base64ToBuffer(base64: string): ArrayBuffer {
-  return Buffer.from(base64, "base64");
+  const buf = Buffer.from(base64, "base64");
+  return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
 }
 
 export async function hashPassword(password: string): Promise<string> {

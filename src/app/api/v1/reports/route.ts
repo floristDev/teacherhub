@@ -3,14 +3,15 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 import { requireAuth } from "@/lib/auth-utils";
 
 const createReportSchema = z.object({
-  title: string,
-  type: string,
-  data: Record&lt;string, unknown&gt;,
-  generatedAt: Date,
+  title: z.string(),
+  type: z.string(),
+  data: z.record(z.string(), z.unknown()),
+  generatedAt: z.date(),
 });
 
 // GET /api/report — list records for the authenticated org
@@ -26,18 +27,18 @@ export async function GET(request: NextRequest) {
   const skip = (page - 1) * limit;
 
   try {
-    const [items, total] = await prisma.$transaction([
-      prisma.report.findMany({
+    const [items, total] = await db.$transaction([
+      db.report.findMany({
         where: {
-          organizationId: session.user.organizationId,
+          organizationId: session.organizationId ?? undefined,
         },
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
       }),
-      prisma.report.count({
+      db.report.count({
         where: {
-          organizationId: session.user.organizationId,
+          organizationId: session.organizationId ?? undefined,
         },
       }),
     ]);
@@ -81,11 +82,16 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  if (!session.organizationId) {
+    return NextResponse.json({ error: "No organization context" }, { status: 400 });
+  }
+
   try {
-    const record = await prisma.report.create({
+    const record = await db.report.create({
       data: {
         ...parsed.data,
-        organizationId: session.user.organizationId,
+        data: parsed.data.data as Prisma.InputJsonValue,
+        organizationId: session.organizationId,
       },
     });
 

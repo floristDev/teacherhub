@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { stripe, mapStripeStatus } from "@/lib/stripe";
+import { getStripe, mapStripeStatus } from "@/lib/stripe";
 import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +17,7 @@ async function handleCheckoutSessionCompleted(
     return;
   }
 
-  const stripeSubscription = await stripe.subscriptions.retrieve(
+  const stripeSubscription = await getStripe().subscriptions.retrieve(
     session.subscription as string,
     { expand: ["items.data.price.product"] }
   );
@@ -29,34 +29,26 @@ async function handleCheckoutSessionCompleted(
       ? (priceItem.price.product as Stripe.Product).name
       : null;
 
-  await db.subscription.upsert({
-    where: { organizationId },
-    create: {
-      organizationId,
-      stripeCustomerId: session.customer as string,
-      stripeSubscriptionId: stripeSubscription.id,
-      stripePriceId: priceId,
-      planName: planName ?? "Unknown Plan",
-      status: mapStripeStatus(stripeSubscription.status),
-      currentPeriodStart: new Date(
-        stripeSubscription.current_period_start * 1000
-      ),
-      currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
-      cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end,
-    },
-    update: {
-      stripeCustomerId: session.customer as string,
-      stripeSubscriptionId: stripeSubscription.id,
-      stripePriceId: priceId,
-      planName: planName ?? "Unknown Plan",
-      status: mapStripeStatus(stripeSubscription.status),
-      currentPeriodStart: new Date(
-        stripeSubscription.current_period_start * 1000
-      ),
-      currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
-      cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end,
-    },
-  });
+  const existing = await db.subscription.findFirst({ where: { organizationId } });
+
+  const subscriptionData = {
+    stripeCustomerId: session.customer as string,
+    stripeSubscriptionId: stripeSubscription.id,
+    stripePriceId: priceId,
+    status: mapStripeStatus(stripeSubscription.status),
+    currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
+  };
+
+  if (existing) {
+    await db.subscription.update({
+      where: { id: existing.id },
+      data: subscriptionData,
+    });
+  } else {
+    await db.subscription.create({
+      data: { organizationId, ...subscriptionData },
+    });
+  }
 }
 
 async function handleSubscriptionUpdated(
@@ -86,9 +78,7 @@ async function handleSubscriptionUpdated(
     data: {
       stripePriceId: priceId,
       status: mapStripeStatus(subscription.status),
-      currentPeriodStart: new Date(subscription.current_period_start * 1000),
       currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-      cancelAtPeriodEnd: subscription.cancel_at_period_end,
     },
   });
 }
@@ -108,8 +98,7 @@ async function handleSubscriptionDeleted(
   await db.subscription.update({
     where: { id: existing.id },
     data: {
-      status: "canceled",
-      cancelAtPeriodEnd: false,
+      status: "CANCELED",
     },
   });
 }
@@ -125,7 +114,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
 
   await db.subscription.update({
     where: { id: existing.id },
-    data: { status: "active" },
+    data: { status: "ACTIVE" },
   });
 }
 
@@ -140,7 +129,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
 
   await db.subscription.update({
     where: { id: existing.id },
-    data: { status: "past_due" },
+    data: { status: "PAST_DUE" },
   });
 }
 
@@ -166,7 +155,7 @@ export async function POST(req: NextRequest) {
   let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(
+    event = getStripe().webhooks.constructEvent(
       body,
       signature,
       process.env.STRIPE_WEBHOOK_SECRET

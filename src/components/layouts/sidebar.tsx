@@ -11,7 +11,7 @@ import {
   Users,
   ChevronRight,
   Database,
-  Database,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -29,7 +29,7 @@ const navigation = [
   {
     name: "Documents",
     href: "/dashboard/documents",
-    icon: Database,
+    icon: FileText,
   },
   {
     name: "Team",

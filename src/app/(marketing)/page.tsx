@@ -213,10 +213,10 @@ export default function HomePage() {
           </div>
 
           <div className="mx-auto mt-16 grid max-w-5xl grid-cols-1 gap-8 lg:grid-cols-3">
-            <div className={`relative flex flex-col rounded-2xl border p-8 shadow-sm transition-all hover:shadow-md ${highlighted ? "border-indigo-300 bg-gradient-to-b from-indigo-50/60 to-white ring-2 ring-indigo-300/50 shadow-indigo-100" : "border-zinc-200 bg-white"}`}>
+            <div className={`relative flex flex-col rounded-2xl border p-8 shadow-sm transition-all hover:shadow-md ${false ? "border-indigo-300 bg-gradient-to-b from-indigo-50/60 to-white ring-2 ring-indigo-300/50 shadow-indigo-100" : "border-zinc-200 bg-white"}`}>
 
               <div>
-                <h3 className={`text-lg font-bold ${highlighted ? "text-indigo-700" : "text-zinc-900"}`}>
+                <h3 className={`text-lg font-bold ${false ? "text-indigo-700" : "text-zinc-900"}`}>
                   Starter
                 </h3>
 
@@ -229,11 +229,11 @@ export default function HomePage() {
 
                 <ul className="mt-8 space-y-3">
                   <li className="flex items-start gap-3">
-                    <CheckCircle2 className={`h-5 w-5 flex-shrink-0 mt-0.5 ${highlighted ? "text-indigo-500" : "text-emerald-500"}`} />
+                    <CheckCircle2 className={`h-5 w-5 flex-shrink-0 mt-0.5 ${false ? "text-indigo-500" : "text-emerald-500"}`} />
                     <span className="text-sm text-zinc-600">Up to 3 team members</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <CheckCircle2 className={`h-5 w-5 flex-shrink-0 mt-0.5 ${highlighted ? "text-indigo-500" : "text-emerald-500"}`} />
+                    <CheckCircle2 className={`h-5 w-5 flex-shrink-0 mt-0.5 ${false ? "text-indigo-500" : "text-emerald-500"}`} />
                     <span className="text-sm text-zinc-600">Basic features</span>
                   </li>
                 </ul>
@@ -243,7 +243,7 @@ export default function HomePage() {
                 <Link
                   href={`/signup?plan=starter`}
                   className={`block w-full rounded-xl px-6 py-3 text-center text-sm font-semibold transition-all ${
-                    highlighted
+                    false
                       ? "bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-200 hover:from-indigo-600 hover:to-violet-700 hover:-translate-y-0.5"
                       : "border border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50"
                   }`}
@@ -252,7 +252,7 @@ export default function HomePage() {
                 </Link>
               </div>
             </div>
-            <div className={`relative flex flex-col rounded-2xl border p-8 shadow-sm transition-all hover:shadow-md ${highlighted ? "border-indigo-300 bg-gradient-to-b from-indigo-50/60 to-white ring-2 ring-indigo-300/50 shadow-indigo-100" : "border-zinc-200 bg-white"}`}>
+            <div className={`relative flex flex-col rounded-2xl border p-8 shadow-sm transition-all hover:shadow-md ${false ? "border-indigo-300 bg-gradient-to-b from-indigo-50/60 to-white ring-2 ring-indigo-300/50 shadow-indigo-100" : "border-zinc-200 bg-white"}`}>
               <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-500 to-violet-600 px-4 py-1 text-xs font-semibold text-white shadow">
                   <Star className="h-3 w-3 fill-current" />
@@ -261,7 +261,7 @@ export default function HomePage() {
               </div>
 
               <div>
-                <h3 className={`text-lg font-bold ${highlighted ? "text-indigo-700" : "text-zinc-900"}`}>
+                <h3 className={`text-lg font-bold ${false ? "text-indigo-700" : "text-zinc-900"}`}>
                   Pro
                 </h3>
 
@@ -274,15 +274,15 @@ export default function HomePage() {
 
                 <ul className="mt-8 space-y-3">
                   <li className="flex items-start gap-3">
-                    <CheckCircle2 className={`h-5 w-5 flex-shrink-0 mt-0.5 ${highlighted ? "text-indigo-500" : "text-emerald-500"}`} />
+                    <CheckCircle2 className={`h-5 w-5 flex-shrink-0 mt-0.5 ${false ? "text-indigo-500" : "text-emerald-500"}`} />
                     <span className="text-sm text-zinc-600">Up to 10 team members</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <CheckCircle2 className={`h-5 w-5 flex-shrink-0 mt-0.5 ${highlighted ? "text-indigo-500" : "text-emerald-500"}`} />
+                    <CheckCircle2 className={`h-5 w-5 flex-shrink-0 mt-0.5 ${false ? "text-indigo-500" : "text-emerald-500"}`} />
                     <span className="text-sm text-zinc-600">All features</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <CheckCircle2 className={`h-5 w-5 flex-shrink-0 mt-0.5 ${highlighted ? "text-indigo-500" : "text-emerald-500"}`} />
+                    <CheckCircle2 className={`h-5 w-5 flex-shrink-0 mt-0.5 ${false ? "text-indigo-500" : "text-emerald-500"}`} />
                     <span className="text-sm text-zinc-600">Priority support</span>
                   </li>
                 </ul>
@@ -292,7 +292,7 @@ export default function HomePage() {
                 <Link
                   href={`/signup?plan=pro`}
                   className={`block w-full rounded-xl px-6 py-3 text-center text-sm font-semibold transition-all ${
-                    highlighted
+                    false
                       ? "bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-200 hover:from-indigo-600 hover:to-violet-700 hover:-translate-y-0.5"
                       : "border border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50"
                   }`}
@@ -301,10 +301,10 @@ export default function HomePage() {
                 </Link>
               </div>
             </div>
-            <div className={`relative flex flex-col rounded-2xl border p-8 shadow-sm transition-all hover:shadow-md ${highlighted ? "border-indigo-300 bg-gradient-to-b from-indigo-50/60 to-white ring-2 ring-indigo-300/50 shadow-indigo-100" : "border-zinc-200 bg-white"}`}>
+            <div className={`relative flex flex-col rounded-2xl border p-8 shadow-sm transition-all hover:shadow-md ${false ? "border-indigo-300 bg-gradient-to-b from-indigo-50/60 to-white ring-2 ring-indigo-300/50 shadow-indigo-100" : "border-zinc-200 bg-white"}`}>
 
               <div>
-                <h3 className={`text-lg font-bold ${highlighted ? "text-indigo-700" : "text-zinc-900"}`}>
+                <h3 className={`text-lg font-bold ${false ? "text-indigo-700" : "text-zinc-900"}`}>
                   Enterprise
                 </h3>
 
@@ -317,19 +317,19 @@ export default function HomePage() {
 
                 <ul className="mt-8 space-y-3">
                   <li className="flex items-start gap-3">
-                    <CheckCircle2 className={`h-5 w-5 flex-shrink-0 mt-0.5 ${highlighted ? "text-indigo-500" : "text-emerald-500"}`} />
+                    <CheckCircle2 className={`h-5 w-5 flex-shrink-0 mt-0.5 ${false ? "text-indigo-500" : "text-emerald-500"}`} />
                     <span className="text-sm text-zinc-600">Unlimited team members</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <CheckCircle2 className={`h-5 w-5 flex-shrink-0 mt-0.5 ${highlighted ? "text-indigo-500" : "text-emerald-500"}`} />
+                    <CheckCircle2 className={`h-5 w-5 flex-shrink-0 mt-0.5 ${false ? "text-indigo-500" : "text-emerald-500"}`} />
                     <span className="text-sm text-zinc-600">All features</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <CheckCircle2 className={`h-5 w-5 flex-shrink-0 mt-0.5 ${highlighted ? "text-indigo-500" : "text-emerald-500"}`} />
+                    <CheckCircle2 className={`h-5 w-5 flex-shrink-0 mt-0.5 ${false ? "text-indigo-500" : "text-emerald-500"}`} />
                     <span className="text-sm text-zinc-600">Dedicated support</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <CheckCircle2 className={`h-5 w-5 flex-shrink-0 mt-0.5 ${highlighted ? "text-indigo-500" : "text-emerald-500"}`} />
+                    <CheckCircle2 className={`h-5 w-5 flex-shrink-0 mt-0.5 ${false ? "text-indigo-500" : "text-emerald-500"}`} />
                     <span className="text-sm text-zinc-600">Custom integrations</span>
                   </li>
                 </ul>
@@ -339,7 +339,7 @@ export default function HomePage() {
                 <Link
                   href={`/signup?plan=enterprise`}
                   className={`block w-full rounded-xl px-6 py-3 text-center text-sm font-semibold transition-all ${
-                    highlighted
+                    false
                       ? "bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-200 hover:from-indigo-600 hover:to-violet-700 hover:-translate-y-0.5"
                       : "border border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50"
                   }`}

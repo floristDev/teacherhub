@@ -3,14 +3,14 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { requireAuth } from "@/lib/auth-utils";
 
 const updateDocumentSchema = z.object({
-  title: string.optional(),
-  type: string.optional(),
-  url: string.optional(),
-  size: number.optional(),
+  title: z.string().optional(),
+  type: z.string().optional(),
+  url: z.string().optional(),
+  size: z.number().optional(),
 }).refine((data) => Object.keys(data).length > 0, {
   message: "At least one field must be provided for update",
 });
@@ -27,7 +27,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
   const { id } = await params;
 
   try {
-    const record = await prisma.document.findUnique({
+    const record = await db.document.findUnique({
       where: { id },
     });
 
@@ -35,7 +35,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Document not found" }, { status: 404 });
     }
 
-    if (record.organizationId !== session.user.organizationId) {
+    if (record.organizationId !== session.organizationId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -71,7 +71,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
 
   try {
-    const existing = await prisma.document.findUnique({
+    const existing = await db.document.findUnique({
       where: { id },
     });
 
@@ -79,11 +79,11 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Document not found" }, { status: 404 });
     }
 
-    if (existing.organizationId !== session.user.organizationId) {
+    if (existing.organizationId !== session.organizationId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const updated = await prisma.document.update({
+    const updated = await db.document.update({
       where: { id },
       data: parsed.data,
     });
@@ -105,7 +105,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   const { id } = await params;
 
   try {
-    const existing = await prisma.document.findUnique({
+    const existing = await db.document.findUnique({
       where: { id },
     });
 
@@ -113,11 +113,11 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Document not found" }, { status: 404 });
     }
 
-    if (existing.organizationId !== session.user.organizationId) {
+    if (existing.organizationId !== session.organizationId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    await prisma.document.delete({
+    await db.document.delete({
       where: { id },
     });
 

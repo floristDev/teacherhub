@@ -2,28 +2,28 @@
 // 2026-02-27T00:07:12.324Z
 
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth-utils";
 import { createPortalSession } from "@/lib/stripe";
 
 export async function POST(_req: NextRequest) {
   try {
-    const session = await auth();
+    const user = await getCurrentUser();
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
       );
     }
 
-    if (!session.user.organizationId) {
+    if (!user.organizationId) {
       return NextResponse.json(
         { error: "No organization found for this account" },
         { status: 400 }
       );
     }
 
-    const portalSession = await createPortalSession(session.user.organizationId);
+    const portalSession = await createPortalSession(user.organizationId);
 
     return NextResponse.json({ url: portalSession.url }, { status: 200 });
   } catch (err) {
